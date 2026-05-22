@@ -35,10 +35,8 @@ volatile CustomizeTable C = {
 /* Disables RAM powerdown */
 .hpMode = DISABLED,
 
-.commonEmcMemVolt   = 1175000, /* LPDDR4(X) JEDEC Specification */
-.eristaEmcMaxClock  = 1600000, /* Maximum HB-MGCH ram rating */
-.eristaEmcMaxClock1 = 1600000,
-.eristaEmcMaxClock2 = 1600000,
+.commonEmcMemVolt  = 1175000, /* LPDDR4(X) JEDEC Specification */
+.eristaEmcMaxClock = 1600000, /* Maximum HB-MGCH ram rating */
 
 /* Available: 66MHz step rate, 100MHz step rate, 133MHz step rate and jedec. */
 /* Jedec freqs are 1333MHz, 1600MHz, 1866MHz, 2133MHz, 2400MHz, 2666MHz, 2933MHz, 3200MHz. */
@@ -84,24 +82,6 @@ volatile CustomizeTable C = {
     /* 2133 */ 0,
 },
 
-/* You can mix and match different latencies if needed */
-/*
- * Read:
- *  2133RL = 40
- *  1866RL = 36
- *  1600RL = 32
- *  1331RL = 28
- * Write:
- *  2133WL = 18
- *  1866WL = 16
- *  1600WL = 14
- *  1331WL = 12
- */
-
-/* Erista only. */
-.mem_burst_read_latency  = RL_1600,
-.mem_burst_write_latency = WL_1600,
-
 .eristaCpuUV      = 0,
 .eristaCpuVmin    = 800,
 .eristaCpuMaxVolt = 1200,
@@ -139,9 +119,6 @@ volatile CustomizeTable C = {
 .marikoGpuVmax = 800,
 
 .commonGpuVoltOffset = 0,
-
-/* Speedo is automatically set by hoc-clk on first boot */
-.gpuSpeedo = 1450,
 
 /* Setting DEACTIVATED_GPU_FREQ on any freq will disable it and all freqs greater than it. (the latter is a bug :/) */
 /* AUTO: Voltage is optimally chosen; with commonGpuVoltOffset applied. */

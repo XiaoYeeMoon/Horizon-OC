@@ -61,7 +61,6 @@ class RamLatenciesSubmenuGui;
 class CpuSubmenuGui;
 class GpuSubmenuGui;
 class GpuCustomTableSubmenuGui;
-class RamTableEditor;
 class ExperimentalSettingsSubMenuGui;
 
 MiscGui::MiscGui()
@@ -688,7 +687,7 @@ protected:
             false
 
         );
-        
+
         addConfigButton(
             HocClkConfigValue_PollingIntervalMs,
             "Polling Interval",
@@ -1005,7 +1004,7 @@ protected:
 
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("RAM Settings"));
-        
+
         addMappedConfigTrackbar(KipConfigValue_emcDvbShift, "DVB Shift",
             {0xFFFFFFFCu, 0xFFFFFFFDu, 0xFFFFFFFEu, 0xFFFFFFFFu, 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u},
             {"-4", "-3", "-2", "-1", " 0", "1", "2", "3", "4", "5", "6", "7", "8"});
@@ -1047,7 +1046,7 @@ protected:
                 true
             );
         }
-        
+
         addConfigToggle(KipConfigValue_hpMode, "HP Mode", true);
 
         std::map<uint32_t, std::string> emc_voltage_label = {
@@ -1097,20 +1096,51 @@ protected:
             addConfigButton(KipConfigValue_stepMode, "Step Mode", ValueRange(0, 0, 2, "", 0), "Step Mode", &thresholdsDisabled, {}, stepMode, false, true);
         }
 
+        std::vector<NamedValue> emcMaxClock = { };
+        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit];
+
         if (IsErista()) {
-            tsl::elm::ListItem* freqSubmenu = new tsl::elm::ListItem("RAM Frequency Editor");
-            freqSubmenu->setClickListener([](u64 keys) {
-                if (keys & HidNpadButton_A) {
-                    tsl::changeTo<RamTableEditor>();
-                    return true;
-                }
-                return false;
-            });
-            freqSubmenu->setValue(R_ARROW);
-            this->listElement->addItem(freqSubmenu);
+            emcMaxClock = {
+                NamedValue("Disabled", 1600000),
+                NamedValue("1633 MHz", 1633000),
+                NamedValue("1666 MHz", 1666000),
+                NamedValue("1700 MHz", 1700000),
+                NamedValue("1733 MHz", 1733000),
+                NamedValue("1766 MHz", 1766000),
+                NamedValue("1800 MHz", 1800000),
+                NamedValue("1833 MHz", 1833000),
+                NamedValue("1862 MHz", 1862400, "JEDEC."),
+                NamedValue("1881 MHz", 1881600),
+                NamedValue("1900 MHz", 1900800),
+                NamedValue("1920 MHz", 1920000),
+                NamedValue("1939 MHz", 1939200),
+                NamedValue("1958 MHz", 1958400),
+                NamedValue("1977 MHz", 1977600),
+                NamedValue("1996 MHz", 1996800, "JEDEC."),
+                NamedValue("2016 MHz", 2016000),
+                NamedValue("2035 MHz", 2035200),
+                NamedValue("2054 MHz", 2054400),
+                NamedValue("2073 MHz", 2073600),
+                NamedValue("2092 MHz", 2092800),
+                NamedValue("2112 MHz", 2112000),
+                NamedValue("2131 MHz", 2131200, "JEDEC."),
+                NamedValue("2150 MHz", 2150400),
+                NamedValue("2169 MHz", 2169600),
+                NamedValue("2188 MHz", 2188800),
+                NamedValue("2208 MHz", 2208000),
+                NamedValue("2227 MHz", 2227200),
+                NamedValue("2246 MHz", 2246400),
+                NamedValue("2265 MHz", 2265600),
+                NamedValue("2284 MHz", 2284800),
+                NamedValue("2304 MHz", 2304000),
+                NamedValue("2323 MHz", 2323200),
+                NamedValue("2342 MHz", 2342400),
+                NamedValue("2361 MHz", 2361600),
+                NamedValue("2380 MHz", 2380800),
+                NamedValue("2400 MHz", 2400000, "JEDEC."),
+            };
         } else {
-            RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit];
-            std::vector<NamedValue> marikoMaxEmcClock = {
+            emcMaxClock = {
                 NamedValue("1600 MHz", 1600000),
                 NamedValue("1633 MHz", 1633000),
                 NamedValue("1666 MHz", 1666000),
@@ -1164,19 +1194,20 @@ protected:
                 NamedValue("3233 MHz", 3233000, "High speedo needed!"),
                 NamedValue("3266 MHz", 3266000, "High speedo needed!"),
                 NamedValue("3300 MHz", 3300000, "High speedo needed!"),
-                // NamedValue("3333MHz (Needs extreme Speedo/PLL)", 3333000),
-                // NamedValue("3366MHz (Needs extreme Speedo/PLL)", 3366000),
-                // NamedValue("3400MHz (Needs extreme Speedo/PLL)", 3400000),
-                // NamedValue("3433MHz (Needs ridiculous Speedo/PLL)", 3433000),
-                // NamedValue("3466MHz (Needs ridiculous Speedo/PLL)", 3466000),
-                // NamedValue("3500MHz (Needs ridiculous Speedo/PLL)", 3500000),
             };
-            for (auto& nv : marikoMaxEmcClock)
-                nv.name = formatMemClockKhzLabel(nv.value, unit);
-
-            addConfigButton(KipConfigValue_marikoEmcMaxClock, "Ram Max Clock", ValueRange(0, 1, 1, "", 1), "Ram Max Clock", &thresholdsDisabled, {}, marikoMaxEmcClock, false, true);
         }
 
+        for (auto& nv : emcMaxClock) {
+            if (nv.name != "Disabled") {
+                nv.name = formatMemClockKhzLabel(nv.value, unit);
+            }
+        }
+
+        if (IsMariko()) {
+            addConfigButton(KipConfigValue_marikoEmcMaxClock, "Ram Max Clock", ValueRange(0, 1, 1, "", 1), "Ram Max Clock", &thresholdsDisabled, {}, emcMaxClock, false, true);
+        } else {
+            addConfigButton(KipConfigValue_eristaEmcMaxClock, "Ram Max Clock", ValueRange(0, 1, 1, "", 1), "Ram Max Clock", &thresholdsDisabled, {}, emcMaxClock, false, true);
+        }
 
         tsl::elm::ListItem* latenciesSubmenu = new tsl::elm::ListItem("RAM Latency Editor");
         latenciesSubmenu->setClickListener([](u64 keys) {
@@ -1313,7 +1344,7 @@ public:
 protected:
 
     void normalizeLatencies(const HocClkConfigValue keysArr[4]) {
-        uint32_t maxClock = (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock];
+        uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
         uint32_t vals[4];
 
         for (int i = 0; i < 4; i++) {
@@ -1348,35 +1379,37 @@ protected:
 
     void listUI() override {
         ValueThresholds thresholdsDisabled(0, 0);
-
-        if (IsErista()) {
-            std::vector<NamedValue> rlLabels = { NamedValue("1333 RL", 28), NamedValue("1600 RL", 32), NamedValue("1866 RL", 36), NamedValue("2133 RL", 40) };
-            std::vector<NamedValue> wlLabels = { NamedValue("1333 WL", 12), NamedValue("1600 WL", 14), NamedValue("1866 WL", 16), NamedValue("2133 WL", 18) };
-
-            addConfigButton(KipConfigValue_mem_burst_read_latency,  "Read Latency",  ValueRange(0, 6, 1, "", 0), "Read Latency",  &thresholdsDisabled, {}, rlLabels, false, true);
-            addConfigButton(KipConfigValue_mem_burst_write_latency, "Write Latency", ValueRange(0, 6, 1, "", 0), "Write Latency", &thresholdsDisabled, {}, wlLabels, false, true);
-            return;
-        }
-
         Result rc = hocclkIpcGetConfigValues(this->configList);
         if (R_FAILED(rc)) [[unlikely]] {
             FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc);
             return;
         }
 
-        uint32_t maxClock = (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock];
+        uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
         RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit];
 
-        static const std::vector<uint32_t> kFreqOptions = {
-            1633000, 1666000, 1700000, 1733000, 1766000, 1800000,
-            1833000, 1866000, 1900000, 1933000, 1966000, 1996800, 2000000,
-            2033000, 2066000, 2100000, 2133000, 2166000, 2200000, 2233000,
-            2266000, 2300000, 2333000, 2366000, 2400000, 2433000, 2466000,
-            2500000, 2533000, 2566000, 2600000, 2633000, 2666000, 2700000,
-            2733000, 2766000, 2800000, 2833000, 2866000, 2900000, 2933000,
-            2966000, 3000000, 3033000, 3066000, 3100000, 3133000, 3166000,
-            3200000, 3233000, 3266000, 3300000,
-        };
+        static std::vector<uint32_t> kFreqOptions = { };
+        if (IsMariko()) {
+            kFreqOptions = {
+                1633000, 1666000, 1700000, 1733000, 1766000, 1800000,
+                1833000, 1866000, 1900000, 1933000, 1966000, 1996800, 2000000,
+                2033000, 2066000, 2100000, 2133000, 2166000, 2200000, 2233000,
+                2266000, 2300000, 2333000, 2366000, 2400000, 2433000, 2466000,
+                2500000, 2533000, 2566000, 2600000, 2633000, 2666000, 2700000,
+                2733000, 2766000, 2800000, 2833000, 2866000, 2900000, 2933000,
+                2966000, 3000000, 3033000, 3066000, 3100000, 3133000, 3166000,
+                3200000, 3233000, 3266000, 3300000,
+            };
+        } else {
+            kFreqOptions = {
+                1633000, 1666000, 1700000, 1733000, 1800000,
+                1833000, 1862400, 1881600, 1900800, 1920000, 1939200,
+                1958400, 1977600, 1996800, 2016000, 2035200, 2054400,
+                2073600, 2092800, 2112000, 2131200, 2150400, 2169600,
+                2188800, 2208000, 2227200, 2246400, 2265600, 2284800,
+                2304000, 2323200, 2342400, 2361600, 2380800, 2400000,
+            };
+        }
 
         static const HocClkConfigValue kLatencyRKeys[4] = {
             KipConfigValue_read_latency_1333,
@@ -1436,7 +1469,7 @@ protected:
                 for (int i = 0; i < 4; i++)
                     vals[i] = (uint32_t)this->configList->values[keysArr[i]];
 
-                uint32_t maxClock = (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock];
+                uint32_t maxClock = IsMariko() ? (uint32_t)this->configList->values[KipConfigValue_marikoEmcMaxClock] : (uint32_t)this->configList->values[KipConfigValue_eristaEmcMaxClock];
                 RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit];
 
                 auto resolveVal = [maxClock](uint32_t v) -> uint32_t {
@@ -1644,7 +1677,7 @@ protected:
                 true
             );
 
-            
+
             std::vector<NamedValue> maxClkOptions = {
                 NamedValue("1963 MHz", 1963500),
                 NamedValue("2091 MHz", 2091000),
@@ -1764,78 +1797,6 @@ protected:
         addConfigToggle(HocClkConfigValue_OverwriteBoostMode, nullptr);
 
     }
-};
-
-class RamTableEditor : public MiscGui {
-public:
-    RamTableEditor() { }
-
-protected:
-    void listUI() override {
-        Result rc = hocclkIpcGetConfigValues(this->configList);
-        if (R_FAILED(rc)) [[unlikely]] { FatalGui::openWithResultCode("hocclkIpcGetConfigValues", rc); return; }
-        this->listElement->addItem(new tsl::elm::CategoryHeader("RAM Frequency Editor"));
-
-        ValueThresholds thresholdsDisabled(0, 0);
-        // 1600000, 1331200, 1065600, 800000, 665600, 408000, 204000
-        RamDisplayUnit unit = (RamDisplayUnit)this->configList->values[HocClkConfigValue_RamDisplayUnit];
-
-        this->listElement->addItem(new tsl::elm::ListItem(formatMemClockKhzLabel(665600, unit)));
-        this->listElement->addItem(new tsl::elm::ListItem(formatMemClockKhzLabel(800000, unit)));
-        this->listElement->addItem(new tsl::elm::ListItem(formatMemClockKhzLabel(1065600, unit)));
-        this->listElement->addItem(new tsl::elm::ListItem(formatMemClockKhzLabel(1331200, unit)));
-        this->listElement->addItem(new tsl::elm::ListItem(formatMemClockKhzLabel(1600000, unit)));
-
-        ValueThresholds eristaRamThresholds(2208000, 2304000);
-
-        std::vector<NamedValue> eristaMaxEmcClock = {
-            NamedValue("Disabled", 1600000),
-            NamedValue("1633 MHz", 1633000),
-            NamedValue("1666 MHz", 1666000),
-            NamedValue("1700 MHz", 1700000),
-            NamedValue("1733 MHz", 1733000),
-            NamedValue("1766 MHz", 1766000),
-            NamedValue("1800 MHz", 1800000),
-            NamedValue("1833 MHz", 1833000),
-            NamedValue("1862 MHz", 1862400, "JEDEC."),
-            NamedValue("1881 MHz", 1881600),
-            NamedValue("1900 MHz", 1900800),
-            NamedValue("1920 MHz", 1920000),
-            NamedValue("1939 MHz", 1939200),
-            NamedValue("1958 MHz", 1958400),
-            NamedValue("1977 MHz", 1977600),
-            NamedValue("1996 MHz", 1996800, "JEDEC."),
-            NamedValue("2016 MHz", 2016000),
-            NamedValue("2035 MHz", 2035200),
-            NamedValue("2054 MHz", 2054400),
-            NamedValue("2073 MHz", 2073600),
-            NamedValue("2092 MHz", 2092800),
-            NamedValue("2112 MHz", 2112000),
-            NamedValue("2131 MHz", 2131200, "JEDEC."),
-            NamedValue("2150 MHz", 2150400),
-            NamedValue("2169 MHz", 2169600),
-            NamedValue("2188 MHz", 2188800),
-            NamedValue("2208 MHz", 2208000),
-            NamedValue("2227 MHz", 2227200),
-            NamedValue("2246 MHz", 2246400),
-            NamedValue("2265 MHz", 2265600),
-            NamedValue("2284 MHz", 2284800),
-            NamedValue("2304 MHz", 2304000),
-            NamedValue("2323 MHz", 2323200),
-            NamedValue("2342 MHz", 2342400),
-            NamedValue("2361 MHz", 2361600),
-            NamedValue("2380 MHz", 2380800),
-            NamedValue("2400 MHz", 2400000, "JEDEC."),
-        };
-
-        for (auto& nv : eristaMaxEmcClock)
-            if (nv.name != "Disabled")
-                nv.name = formatMemClockKhzLabel(nv.value, unit);
-
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock1, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock2, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
-    };
 };
 
 class GpuSubmenuGui : public MiscGui {
@@ -2320,8 +2281,6 @@ void MiscGui::refresh() {
         constexpr HocClkConfigValue emcKeys[] = {
             KipConfigValue_marikoEmcMaxClock,
             KipConfigValue_eristaEmcMaxClock,
-            KipConfigValue_eristaEmcMaxClock1,
-            KipConfigValue_eristaEmcMaxClock2,
         };
         for (auto key : emcKeys) {
             auto it = this->configNamedValues.find(key);

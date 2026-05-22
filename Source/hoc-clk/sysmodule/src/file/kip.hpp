@@ -38,8 +38,7 @@ namespace kip {
         u32 hpMode;
         u32 commonEmcMemVolt;
         u32 eristaEmcMaxClock;
-        u32 eristaEmcMaxClock1;
-        u32 eristaEmcMaxClock2;
+        u32 reserved1[2];
         u32 stepMode;
         u32 marikoEmcMaxClock;
         u32 marikoEmcVddqVolt;
@@ -66,8 +65,7 @@ namespace kip {
         u32 readLatency1333, readLatency1600, readLatency1866, readLatency2133;
         u32 writeLatency1333, writeLatency1600, writeLatency1866, writeLatency2133;
 
-        u32 mem_burst_read_latency;
-        u32 mem_burst_write_latency;
+        u32 reserved2[2];
 
         u32 eristaCpuUV;
         u32 eristaCpuVmin;
@@ -94,7 +92,7 @@ namespace kip {
 
         u32 commonGpuVoltOffset;
 
-        u32 gpuSpeedo;
+        u32 reserved3;
 
         u32 eristaGpuVoltArray[27];
         u32 marikoGpuVoltArray[24];
@@ -212,8 +210,6 @@ namespace kip {
 
     static inline bool cust_set_common_emc_volt(const char* p, u32 v) { CUST_WRITE_FIELD(p, commonEmcMemVolt, v); }
     static inline bool cust_set_erista_emc_max(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaEmcMaxClock, v); }
-    static inline bool cust_set_erista_emc_max1(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaEmcMaxClock1, v); }
-    static inline bool cust_set_erista_emc_max2(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaEmcMaxClock2, v); }
     static inline bool cust_set_step_mode(const char* p, u32 v) { CUST_WRITE_FIELD(p, stepMode, v); }
     static inline bool cust_set_mariko_emc_max(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoEmcMaxClock, v); }
     static inline bool cust_set_mariko_emc_vddq(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoEmcVddqVolt, v); }
@@ -244,9 +240,6 @@ namespace kip {
     static inline bool cust_set_write_latency_1866(const char* p, u32 v) { CUST_WRITE_FIELD(p, writeLatency1866, v); }
     static inline bool cust_set_write_latency_2133(const char* p, u32 v) { CUST_WRITE_FIELD(p, writeLatency2133, v); }
 
-    static inline bool cust_set_burst_read_lat(const char* p, u32 v) { CUST_WRITE_FIELD(p, mem_burst_read_latency, v); }
-    static inline bool cust_set_burst_write_lat(const char* p, u32 v) { CUST_WRITE_FIELD(p, mem_burst_write_latency, v); }
-
     static inline bool cust_set_erista_cpu_uv(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaCpuUV, v); }
     static inline bool cust_set_eristaCpuVmin(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaCpuVmin, v); }
     static inline bool cust_set_erista_cpu_max_volt(const char* p, u32 v) { CUST_WRITE_FIELD(p, eristaCpuMaxVolt, v); }
@@ -266,7 +259,6 @@ namespace kip {
     static inline bool cust_set_mariko_gpu_vmin(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoGpuVmin, v); }
     static inline bool cust_set_mariko_gpu_vmax(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoGpuVmax, v); }
     static inline bool cust_set_common_gpu_offset(const char* p, u32 v) { CUST_WRITE_FIELD(p, commonGpuVoltOffset, v); }
-    static inline bool cust_set_gpu_speedo(const char* p, u32 v) { CUST_WRITE_FIELD(p, gpuSpeedo, v); }
     static inline bool cust_set_marikoCpuMaxClock(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoCpuMaxClock, v); }
     static inline bool cust_set_marikoSocVmax(const char* p, u32 v) { CUST_WRITE_FIELD(p, marikoSocVmax, v); }
 
@@ -301,8 +293,6 @@ namespace kip {
 
     static inline u32 cust_get_common_emc_volt(const CustomizeTable* t) { return CUST_GET_FIELD(t, commonEmcMemVolt); }
     static inline u32 cust_get_erista_emc_max(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaEmcMaxClock); }
-    static inline u32 cust_get_erista_emc_max1(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaEmcMaxClock1); }
-    static inline u32 cust_get_erista_emc_max2(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaEmcMaxClock2); }
     static inline u32 cust_get_step_mode(const CustomizeTable* t) { return CUST_GET_FIELD(t, stepMode); }
     static inline u32 cust_get_mariko_emc_max(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoEmcMaxClock); }
     static inline u32 cust_get_mariko_emc_vddq(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoEmcVddqVolt); }
@@ -333,9 +323,6 @@ namespace kip {
     static inline u32 cust_get_write_latency_1866(const CustomizeTable* t) { return CUST_GET_FIELD(t, writeLatency1866); }
     static inline u32 cust_get_write_latency_2133(const CustomizeTable* t) { return CUST_GET_FIELD(t, writeLatency2133); }
 
-    static inline u32 cust_get_burst_read_lat(const CustomizeTable* t) { return CUST_GET_FIELD(t, mem_burst_read_latency); }
-    static inline u32 cust_get_burst_write_lat(const CustomizeTable* t) { return CUST_GET_FIELD(t, mem_burst_write_latency); }
-
     static inline u32 cust_get_erista_cpu_uv(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaCpuUV); }
     static inline u32 cust_get_eristaCpuVmin(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaCpuVmin); }
     static inline u32 cust_get_erista_cpu_max_volt(const CustomizeTable* t) { return CUST_GET_FIELD(t, eristaCpuMaxVolt); }
@@ -356,7 +343,6 @@ namespace kip {
     static inline u32 cust_get_mariko_gpu_vmin(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoGpuVmin); }
     static inline u32 cust_get_mariko_gpu_vmax(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoGpuVmax); }
     static inline u32 cust_get_common_gpu_offset(const CustomizeTable* t) { return CUST_GET_FIELD(t, commonGpuVoltOffset); }
-    static inline u32 cust_get_gpu_speedo(const CustomizeTable* t) { return CUST_GET_FIELD(t, gpuSpeedo); }
     static inline u32 cust_get_marikoCpuMaxClock(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoCpuMaxClock); }
     static inline u32 cust_get_marikoSocVmax(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoSocVmax); }
 

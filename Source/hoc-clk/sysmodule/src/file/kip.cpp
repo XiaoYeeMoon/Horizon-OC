@@ -72,8 +72,6 @@ namespace kip {
 
         CUST_WRITE_FIELD_BATCH(&table, commonEmcMemVolt, config::GetConfigValue(KipConfigValue_commonEmcMemVolt));
         CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock));
-        CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock1, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock1));
-        CUST_WRITE_FIELD_BATCH(&table, eristaEmcMaxClock2, config::GetConfigValue(KipConfigValue_eristaEmcMaxClock2));
         CUST_WRITE_FIELD_BATCH(&table, marikoEmcMaxClock, config::GetConfigValue(KipConfigValue_marikoEmcMaxClock));
         CUST_WRITE_FIELD_BATCH(&table, marikoEmcVddqVolt, config::GetConfigValue(KipConfigValue_marikoEmcVddqVolt));
         CUST_WRITE_FIELD_BATCH(&table, emcDvbShift, config::GetConfigValue(KipConfigValue_emcDvbShift) > 8 && config::GetConfigValue(KipConfigValue_emcDvbShift) <= 16 ? 8 : config::GetConfigValue(KipConfigValue_emcDvbShift)); // 2.2.0 -> 2.3.0 compat
@@ -104,8 +102,6 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, writeLatency1866, config::GetConfigValue(KipConfigValue_write_latency_1866));
         CUST_WRITE_FIELD_BATCH(&table, writeLatency2133, config::GetConfigValue(KipConfigValue_write_latency_2133));
 
-        CUST_WRITE_FIELD_BATCH(&table, mem_burst_read_latency, config::GetConfigValue(KipConfigValue_mem_burst_read_latency));
-        CUST_WRITE_FIELD_BATCH(&table, mem_burst_write_latency, config::GetConfigValue(KipConfigValue_mem_burst_write_latency));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuUV, config::GetConfigValue(KipConfigValue_eristaCpuUV));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuVmin, config::GetConfigValue(KipConfigValue_eristaCpuVmin));
         CUST_WRITE_FIELD_BATCH(&table, eristaCpuMaxVolt, config::GetConfigValue(KipConfigValue_eristaCpuMaxVolt));
@@ -130,7 +126,6 @@ namespace kip {
         CUST_WRITE_FIELD_BATCH(&table, marikoGpuVmax, config::GetConfigValue(KipConfigValue_marikoGpuVmax));
 
         CUST_WRITE_FIELD_BATCH(&table, commonGpuVoltOffset, config::GetConfigValue(KipConfigValue_commonGpuVoltOffset));
-        CUST_WRITE_FIELD_BATCH(&table, gpuSpeedo, config::GetConfigValue(KipConfigValue_gpuSpeedo));
 
         for (int i = 0; i < 24; i++) {
             table.marikoGpuVoltArray[i] = config::GetConfigValue((HocClkConfigValue)(KipConfigValue_g_volt_76800 + i));
@@ -229,8 +224,6 @@ namespace kip {
 
         configValues.values[KipConfigValue_commonEmcMemVolt] = cust_get_common_emc_volt(&table);
         configValues.values[KipConfigValue_eristaEmcMaxClock] = cust_get_erista_emc_max(&table);
-        configValues.values[KipConfigValue_eristaEmcMaxClock1] = cust_get_erista_emc_max1(&table);
-        configValues.values[KipConfigValue_eristaEmcMaxClock2] = cust_get_erista_emc_max2(&table);
         configValues.values[KipConfigValue_marikoEmcMaxClock] = cust_get_mariko_emc_max(&table);
         configValues.values[KipConfigValue_marikoEmcVddqVolt] = cust_get_mariko_emc_vddq(&table);
         configValues.values[KipConfigValue_emcDvbShift] = cust_get_emc_dvb_shift(&table) > 8 && cust_get_emc_dvb_shift(&table) <= 16 ? 8 : cust_get_emc_dvb_shift(&table); // 2.2.0 -> 2.3.0 compat
@@ -261,9 +254,6 @@ namespace kip {
         configValues.values[KipConfigValue_write_latency_1866] = cust_get_write_latency_1866(&table);
         configValues.values[KipConfigValue_write_latency_2133] = cust_get_write_latency_2133(&table);
 
-        configValues.values[KipConfigValue_mem_burst_read_latency] = cust_get_burst_read_lat(&table);
-        configValues.values[KipConfigValue_mem_burst_write_latency] = cust_get_burst_write_lat(&table);
-
         configValues.values[KipConfigValue_eristaCpuUV] = cust_get_erista_cpu_uv(&table);
         configValues.values[KipConfigValue_eristaCpuVmin] = cust_get_eristaCpuVmin(&table);
         configValues.values[KipConfigValue_eristaCpuMaxVolt] = cust_get_erista_cpu_max_volt(&table);
@@ -285,7 +275,6 @@ namespace kip {
         configValues.values[KipConfigValue_marikoGpuVmin] = cust_get_mariko_gpu_vmin(&table);
         configValues.values[KipConfigValue_marikoGpuVmax] = cust_get_mariko_gpu_vmax(&table);
         configValues.values[KipConfigValue_commonGpuVoltOffset] = cust_get_common_gpu_offset(&table);
-        configValues.values[KipConfigValue_gpuSpeedo] = board::GetFuseData()->gpuSpeedo; // cust_get_gpu_speedo(&table);
 
         for (int i = 0; i < 24; i++) {
             configValues.values[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);

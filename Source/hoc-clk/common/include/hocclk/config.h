@@ -81,8 +81,6 @@ typedef enum {
 
     KipConfigValue_commonEmcMemVolt,
     KipConfigValue_eristaEmcMaxClock,
-    KipConfigValue_eristaEmcMaxClock1,
-    KipConfigValue_eristaEmcMaxClock2,
 
     KipConfigValue_stepMode,
     KipConfigValue_marikoEmcMaxClock,
@@ -115,9 +113,6 @@ typedef enum {
     KipConfigValue_write_latency_1866,
     KipConfigValue_write_latency_2133,
 
-    KipConfigValue_mem_burst_read_latency,
-    KipConfigValue_mem_burst_write_latency,
-
     KipConfigValue_eristaCpuUV,
     KipConfigValue_eristaCpuVmin,
     KipConfigValue_eristaCpuMaxVolt,
@@ -141,7 +136,6 @@ typedef enum {
     KipConfigValue_marikoGpuVmax,
 
     KipConfigValue_commonGpuVoltOffset,
-    KipConfigValue_gpuSpeedo,
 
     KipConfigValue_g_volt_76800,
     KipConfigValue_g_volt_153600,
@@ -304,11 +298,7 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
         case KipConfigValue_commonEmcMemVolt:
             return pretty ? "Common EMC/MEM Voltage" : "common_emc_mem_volt";
         case KipConfigValue_eristaEmcMaxClock:
-            return pretty ? "Erista EMC Max Clock 1" : "erista_emc_max_clock";
-        case KipConfigValue_eristaEmcMaxClock1:
-            return pretty ? "Erista EMC Max Clock 2" : "erista_emc_max_clock1";
-        case KipConfigValue_eristaEmcMaxClock2:
-            return pretty ? "Erista EMC Max Clock 3" : "erista_emc_max_clock2";
+            return pretty ? "Erista EMC Max Clock" : "erista_emc_max_clock";
         case KipConfigValue_stepMode:
             return pretty ? "Step Mode:" : "step_mode";
         case KipConfigValue_marikoEmcMaxClock:
@@ -365,11 +355,6 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
         case KipConfigValue_write_latency_2133:
             return pretty ? "2133 Write Latency" : "write_latency_2133";
 
-        case KipConfigValue_mem_burst_read_latency:
-            return pretty ? "Memory Burst Read Latency" : "mem_burst_read_latency";
-        case KipConfigValue_mem_burst_write_latency:
-            return pretty ? "Memory Burst Write Latency" : "mem_burst_write_latency";
-
         // CPU – Erista
         case KipConfigValue_eristaCpuUV:
             return pretty ? "Erista CPU Undervolt" : "erista_cpu_uv";
@@ -418,8 +403,6 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
 
         case KipConfigValue_commonGpuVoltOffset:
             return pretty ? "Common GPU Voltage Offset" : "common_gpu_volt_offset";
-        case KipConfigValue_gpuSpeedo:
-            return pretty ? "GPU Speedo" : "gpu_speedo";
 
         // Mariko GPU voltages (24)
         case KipConfigValue_g_volt_76800: return pretty ? "Mariko GPU Volt 76 MHz" : "g_volt_76800";
@@ -572,8 +555,6 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
         case KipConfigValue_hpMode:
         case KipConfigValue_commonEmcMemVolt:
         case KipConfigValue_eristaEmcMaxClock:
-        case KipConfigValue_eristaEmcMaxClock1:
-        case KipConfigValue_eristaEmcMaxClock2:
         case KipConfigValue_stepMode:
         case KipConfigValue_marikoEmcMaxClock:
         case KipConfigValue_marikoEmcVddqVolt:
@@ -599,8 +580,6 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
         case KipConfigValue_write_latency_1600:
         case KipConfigValue_write_latency_1866:
         case KipConfigValue_write_latency_2133:
-        case KipConfigValue_mem_burst_read_latency:
-        case KipConfigValue_mem_burst_write_latency:
         case KipConfigValue_eristaCpuUV:
         case KipConfigValue_eristaCpuMaxVolt:
         case KipConfigValue_marikoCpuUVLow:
@@ -618,7 +597,6 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
         case KipConfigValue_marikoGpuVmin:
         case KipConfigValue_marikoGpuVmax:
         case KipConfigValue_commonGpuVoltOffset:
-        case KipConfigValue_gpuSpeedo:
         case KipConfigValue_g_volt_76800:
         case KipConfigValue_g_volt_153600:
         case KipConfigValue_g_volt_230400:

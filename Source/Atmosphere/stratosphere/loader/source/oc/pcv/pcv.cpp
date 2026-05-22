@@ -147,7 +147,7 @@ namespace ams::ldr::hoc::pcv {
             { eristaCpuDvfsMaxFreq,                 1785'000, 2397'000, panic::Cpu,      },
             { marikoCpuDvfsMaxFreq,                 1785'000, 2703'000, panic::Cpu,      },
             { C.commonEmcMemVolt,                    912'500, 1350'000, panic::Emc,      }, /* Official vmax for the RAMs is 1400-1500mV */
-            { GET_MAX_OF_ARR(erista::maxEmcClocks), 1600'000, 2600'000, panic::Emc,      },
+            { C.eristaEmcMaxClock,                  1600'000, 2600'000, panic::Emc,      },
             { C.marikoEmcMaxClock,                  1600'000, 3500'000, panic::Emc,      },
             { C.marikoEmcVddqVolt,                   400'000,  750'000, panic::Emc,      },
             { C.marikoSocVmax,                          1000,     1200, panic::Emc,      },
