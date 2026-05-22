@@ -221,6 +221,52 @@ namespace clockManager {
                 continue;
             }
 
+            // Workaround for PCV bug involving 38.4mhz step rate on erista
+            if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Erista) {
+                static const struct { 
+                    u32 hz; 
+                    HocClkConfigValue kval; 
+                } eristaGpuVoltMap[] = {
+                    {  76800000, KipConfigValue_g_volt_e_76800   },
+                    { 115200000, KipConfigValue_g_volt_e_115200  },
+                    { 153600000, KipConfigValue_g_volt_e_153600  },
+                    { 192000000, KipConfigValue_g_volt_e_192000  },
+                    { 230400000, KipConfigValue_g_volt_e_230400  },
+                    { 268800000, KipConfigValue_g_volt_e_268800  },
+                    { 307200000, KipConfigValue_g_volt_e_307200  },
+                    { 345600000, KipConfigValue_g_volt_e_345600  },
+                    { 384000000, KipConfigValue_g_volt_e_384000  },
+                    { 422400000, KipConfigValue_g_volt_e_422400  },
+                    { 460800000, KipConfigValue_g_volt_e_460800  },
+                    { 499200000, KipConfigValue_g_volt_e_499200  },
+                    { 537600000, KipConfigValue_g_volt_e_537600  },
+                    { 576000000, KipConfigValue_g_volt_e_576000  },
+                    { 614400000, KipConfigValue_g_volt_e_614400  },
+                    { 652800000, KipConfigValue_g_volt_e_652800  },
+                    { 691200000, KipConfigValue_g_volt_e_691200  },
+                    { 729600000, KipConfigValue_g_volt_e_729600  },
+                    { 768000000, KipConfigValue_g_volt_e_768000  },
+                    { 806400000, KipConfigValue_g_volt_e_806400  },
+                    { 844800000, KipConfigValue_g_volt_e_844800  },
+                    { 883200000, KipConfigValue_g_volt_e_883200  },
+                    { 921600000, KipConfigValue_g_volt_e_921600  },
+                    { 960000000, KipConfigValue_g_volt_e_960000  },
+                    { 998400000, KipConfigValue_g_volt_e_998400  },
+                    {1036800000, KipConfigValue_g_volt_e_1036800 },
+                    {1075200000, KipConfigValue_g_volt_e_1075200 },
+                };
+                bool skip = false;
+                for (auto& entry : eristaGpuVoltMap) {
+                    if (entry.hz == freqs[i]) {
+                        if (config::GetConfigValue(entry.kval) == 2000) {
+                            skip = true;
+                        }
+                        break;
+                    }
+                }
+                if (skip) continue;
+            }
+
             *hz = freqs[i];
             fileUtils::LogLine("[mgr] %02u - %u - %u.%u MHz", gFreqTable[module].count, *hz, *hz / 1000000, *hz / 100000 - *hz / 1000000 * 10);
 
