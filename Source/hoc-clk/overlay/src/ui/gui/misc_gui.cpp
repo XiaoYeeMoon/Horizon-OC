@@ -927,6 +927,7 @@ protected:
                 renderer->drawString("to your display panel! ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
                 renderer->drawString("Proceed at your own risk!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
             });
+            warningTextDV->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
             this->listElement->addItem(warningTextDV);
             addConfigButton(
                 HocClkConfigValue_DisplayVoltage,
