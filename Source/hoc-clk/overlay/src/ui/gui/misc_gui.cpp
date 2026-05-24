@@ -1903,7 +1903,7 @@ protected:
             //     return false;
             // });
 
-            addConfigButton(KipConfigValue_marikoGpuBootVolt, "GPU Boot Volt", ValueRange(700, 850, 5, "mV", 1), "GPU Boot Voltage", &thresholdsDisabled, {}, {}, false, true);
+            addConfigButton(KipConfigValue_marikoGpuBootVolt, "GPU Boot Volt", ValueRange(700, 800, 5, "mV", 1), "GPU Boot Voltage", &thresholdsDisabled, {}, {}, false, true);
             addConfigButton(KipConfigValue_marikoGpuVmin, "GPU VMIN", ValueRange(0, 0, 0, "0", 1), "GPU VMIN", &thresholdsDisabled, {}, mGpuVoltsVmin, false, true);
             ValueThresholds MgpuVmaxThresholds(805, 850);
             addConfigButton(

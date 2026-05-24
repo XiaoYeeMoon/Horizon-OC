@@ -26,8 +26,6 @@
 #include <notification.h>
 #include <crc32.h>
 
-#pragma pack(push, 1)
-
 namespace kip {
     extern bool kipAvailable;
 
@@ -90,8 +88,6 @@ namespace kip {
 
         u32 commonGpuVoltOffset;
 
-        u32 reserved3;
-
         u32 eristaGpuVoltArray[27];
         u32 marikoGpuVoltArray[24];
 
@@ -100,8 +96,6 @@ namespace kip {
 
         u32 reserved[60];
     } CustomizeTable;
-
-    #pragma pack(pop)
 
     #define CUST_MAGIC "CUST"
     #define CUST_MAGIC_LEN 4

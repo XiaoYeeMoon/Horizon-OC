@@ -675,6 +675,6 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
             return ((input >= 800) && (input <= 1325));
 
         default:
-            return false;
+            return true;
     }
 }
