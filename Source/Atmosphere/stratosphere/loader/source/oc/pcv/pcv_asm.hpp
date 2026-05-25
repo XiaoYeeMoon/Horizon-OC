@@ -80,6 +80,9 @@ namespace ams::ldr::hoc::pcv {
         return ((ins1 ^ ins2) >> 24) == 0;
     };
 
+    inline auto AsmBlCompareOpcodeOnly = [](u32 ins1, u32 ins2) {
+        return ((ins1 ^ ins2) >> 26) == 0;
+    };
     inline bool AsmComparePrologue(u32 ins1, u32 ins2, u32 ins3, u32 cmp1, u32 cmp2, u32 cmp3) {
         constexpr u32 StpImmMask = ~((((1u << 7) - 1u) << 15));
 

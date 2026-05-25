@@ -562,78 +562,46 @@ namespace ams::ldr::hoc::pcv::erista {
     //     R_SUCCEED();
     // }
 
-    u32 matchCount = 0;
-    Result MemMtcTableNewFwAsm(u32 *ptr, u32 movCountPatch, u32 MovOffset) {
-        (void) movCountPatch;
-        constexpr u32 MtcRetMtcAsm = 0x103CC640;
-        constexpr u32 MtcCbzAsm    = 0xB4000073;
-
-        u32 *retPtr = ScanAssembly(ptr, 5, MtcRetMtcAsm, AsmCompareAdrpNoImm);
-        R_UNLESS(retPtr != nullptr, ldr::ResultInvalidMtcTablePattern());
-
-        u32 cbz = *(ptr - MovOffset - 1);
-        R_UNLESS(AsmCbzCompareOpcodeOnly(cbz, MtcCbzAsm), ldr::ResultInvalidMtcTablePattern());
-        R_UNLESS(*(ptr - MovOffset - 2) == 0x54000461, ldr::ResultInvalidMtcTablePattern());
-
-        bool success = false;
-        u32 offset = 0;
-        for (u32 i = 0; i < 40; ++i) {
-            success = AsmComparePrologue(*(ptr - i), *(ptr - i - 1), *(ptr - i - 2), 0x910003FD, 0xA9014FF4, 0xA9BE7BFD);
-            if (success) {
-                offset = i;
-                break;
-            }
-        }
-
-        if (!success) {
-            R_THROW(ldr::ResultInvalidMtcTable());
-        }
-
-        ++matchCount;
-        u32 strAferMov = *(ptr - MovOffset + 1);
-
-        memset(ptr - offset + 2, NopIns, 184);
-        PATCH_OFFSET(ptr - MovOffset, movCountPatch);
-        PATCH_OFFSET(ptr - MovOffset + 1, strAferMov);
-
-        // for (u32 i = 0; i < 32; ++i) {
-          //   Log("0x%08X\n", __builtin_bswap32(*(ptr - offset - 3 + i)));
-        // }
-    }
-        R_SUCCEED();
-
     Result MemMtcTableAsm(u32 *ptr) {
-        constexpr u32 AddpOffset = 1;
-        constexpr u32 BrOffset   = 9;
-        constexpr u32 MovOffset  = 7;
-        if (matchCount) return 1;
+        constexpr s32 GoodAdrpOffset = -1;
+        constexpr s32 GoodMovOffset  = -7;
+        constexpr s32 GoodBlOffset       = 1;
+        constexpr u32 MtcGoodBlOpcode = 0x97fe6cfc;
+
+        constexpr u32 MtcBadBlOpcode0 = 0x97ffae64; // bl nn::pcv::GetHardwareType
+        constexpr u32 MtcBadBlOpcode1 = 0x940036d5; // bl nn::pcv::GetHardwareType
+        constexpr u32 MtcBadAdrpAsm = 0xd00000a1; // adrp x1, s_ModuleResetStatus_
+
+        constexpr s32 MtcBadBlOffset0 = 2;
+        constexpr s32 MtcBadBlOffset1 = -1;
+        constexpr s32 MtcBadAdrpOffset = 1;
+
         /* Ensure we don't dereference memory before nso start. */
-        R_UNLESS(ptr - BrOffset >= nsoStart, ldr::ResultInvalidMtcTablePattern());
+        R_UNLESS(ptr + GoodMovOffset >= nsoStart, ldr::ResultInvalidMtcTablePattern());
 
-        u32 adrp = *(ptr - AddpOffset);
-        R_UNLESS(AsmCompareAdrpNoImm(adrp, MtcAdrpAsm), ldr::ResultInvalidMtcTablePattern());
-
+        /* Check for GetHardwareType asm and skip if it is found */
+        if(AsmCompareAdrpNoImm(*(ptr + MtcBadAdrpOffset), MtcBadAdrpAsm) && AsmBlCompareOpcodeOnly(*(ptr + MtcBadBlOffset0), MtcBadBlOpcode0) && AsmBlCompareOpcodeOnly(*(ptr + MtcBadBlOffset1), MtcBadBlOpcode1)) {
+            R_SKIP();
+        }
+        
+        u32 adrp = *(ptr + GoodAdrpOffset);
+        R_UNLESS(AsmCompareAdrpNoImm(adrp, MtcAdrpAsm), ldr::ResultInvalidMtcTablePattern()); // Should always pass
+        
         /* We don't check for matching register because both registers must be x0 in order to pass the previous checks. */
         /* The correct instructions will always be x0 since the mtcTable pointer is returned. */
 
         /* Pray this does not break. */
-        u32 br = *(ptr - BrOffset);
-        bool oldFw = AsmCompareBrNoRd(br, MtcBrAsm);
+        u32 bl = *(ptr + GoodBlOffset);
+        R_UNLESS(AsmBlCompareOpcodeOnly(bl, MtcGoodBlOpcode), ldr::ResultInvalidMtcTablePattern()); // Should always pass
+
 
         /* Pray this does not break either. */
-        u32 mov = *(ptr - MovOffset);
+        u32 mov = *(ptr + GoodMovOffset);
         R_UNLESS(asm_compare_no_rd(mov, MtcMovAsm), ldr::ResultInvalidMtcTablePattern());
 
-        u8  movRd         = asm_get_rd(mov);
-        u32 movCountPatch = asm_set_rd(asm_set_imm16(MtcMovAsm, newEmcList.size()), movRd);
+        u32 movCountPatch = asm_set_rd(asm_set_imm16(MtcMovAsm, newEmcList.size()), asm_get_rd(mov));
 
-        if (!oldFw) {
-            MemMtcTableNewFwAsm(ptr, movCountPatch, MovOffset);
-            R_SUCCEED();
-        }
-
-        PATCH_OFFSET(ptr - BrOffset, NopIns);
-        PATCH_OFFSET(ptr - MovOffset, movCountPatch);
+        PATCH_OFFSET(ptr + GoodMovOffset, movCountPatch);
 
         R_SUCCEED();
     }
@@ -660,7 +628,7 @@ namespace ams::ldr::hoc::pcv::erista {
             {"MEM Freq Max",      &MemFreqMax,             0, nullptr,  EmcClkOSLimit        },
             {"MEM Freq PLLM",     &MemFreqPllmLimit,       2, nullptr,  EmcClkPllmLimit      },
             {"MEM Volt",          &MemVoltHandler,         2, nullptr,  MemVoltHOS           },
-            {"MEM Table Asm",     &MemMtcTableAsm,         0,           &MemMtcGetGetTablePatternFn },
+            {"MEM Table Asm",     &MemMtcTableAsm,         4,           &MemMtcGetGetTablePatternFn },
         };
 
         for (uintptr_t ptr = mapped_nso; ptr <= mapped_nso + nso_size - sizeof(EristaMtcTable); ptr += sizeof(u32)) {
@@ -675,9 +643,9 @@ namespace ams::ldr::hoc::pcv::erista {
         // ViewLog();
 
         for (auto &entry : patches) {
-            Log("%s Count: %zu\n", entry.description, entry.patched_count);
+            LOGGING("%s Count: %zu\n", entry.description, entry.patched_count);
             if (R_FAILED(entry.CheckResult())) {
-                ViewLog();
+                // ViewLog();
                 panic::SmcError(panic::Patch);
 
                 CRASH(entry.description);
