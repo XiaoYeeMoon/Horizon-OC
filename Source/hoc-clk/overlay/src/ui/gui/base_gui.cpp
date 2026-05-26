@@ -35,6 +35,8 @@ void BaseFrame::draw(tsl::gfx::Renderer* renderer) {
 #include <tesla.hpp>
 #include <math.h>
 
+#define LOGO_Y_REAL 65
+
 #define LOGO_X 20
 #define LOGO_Y 60
 #define LOGO_LABEL_FONT_SIZE 45
@@ -136,7 +138,7 @@ static s32 drawDynamicUltraText(
 }
 
 void BaseGui::preDraw(tsl::gfx::Renderer* renderer) {
-    renderer->drawBitmap(LOGO_X, LOGO_Y - LOGO_LABEL_FONT_SIZE, LOGO_IMG_W, LOGO_IMG_H, hoc_rgba);
+    renderer->drawBitmap(LOGO_X, LOGO_Y_REAL - LOGO_LABEL_FONT_SIZE, LOGO_IMG_W, LOGO_IMG_H, hoc_rgba);
 
     drawDynamicUltraText(
         renderer,
