@@ -3,6 +3,8 @@
  *
  * Copyright (c) 2023 hanai3Bi
  *
+ * Copyright (c) B3711
+ *
  * Copyright (c) Souldbminer, Lightos_ and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -591,7 +593,7 @@ namespace ams::ldr::hoc::pcv::erista {
         /* The correct instructions will always be x0 since the mtcTable pointer is returned. */
         u32 adrp = *(ptr + GoodAdrpOffset);
         R_UNLESS(AsmCompareAdrpNoImm(adrp, MtcAdrpAsm), ldr::ResultInvalidMtcTablePattern());
-        
+
 
         /* Check for the branch instruction above the cbz to ensure we are patching the right location*/
         u32 bl = *(ptr + GoodBlOffset);

@@ -3,6 +3,8 @@
  *
  * Copyright (c) 2023 hanai3Bi
  *
+ * Copyright (c) B3711
+ *
  * Copyright (c) Souldbminer and Horizon OC Contributors
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -50,11 +52,10 @@ namespace ams::ldr::hoc::pcv::mariko {
             R_THROW(ldr::ResultInvalidGpuDvfs());
         }
 
-
-        if(C.marikoGpuBootVolt) {
-            PATCH_OFFSET(ptr - 3,  C.marikoGpuBootVolt);
+        if (C.marikoGpuBootVolt) {
+            PATCH_OFFSET(ptr - 3, C.marikoGpuBootVolt);
         }
-        
+
         if (C.marikoGpuVmin) {
             PATCH_OFFSET(ptr,      C.marikoGpuVmin);
             PATCH_OFFSET(ptr +  3, C.marikoGpuVmin);
@@ -864,7 +865,7 @@ namespace ams::ldr::hoc::pcv::mariko {
             { 3133000, { DVB(DvbVolt(1025, 1000,  975)) }, },
             { 3166000, { DVB(DvbVolt(1037, 1012,  987)) }, },
             { 3200000, { DVB(DvbVolt(1050, 1025, 1000)) }, },
-            {     ~0u, { }, },
+            {     ~0u, {                                }, },
         };
         #undef DVB
         DvbEntry emcDvbTableOc[newEmcList.size()];
