@@ -186,7 +186,7 @@ namespace clockManager {
                 && config::GetConfigValue(HocClkConfigValue_MarikoMiddleFreqs)) {
             constexpr u32 kStep    = 38400000;
             constexpr u32 kPcvStep = 76800000;
-
+            u32 kmax = ~0;
             for (u32 i = 0; i < count; i++) {
                 for (u32 j = 0; j < count; j++) {
                     if (freqs[j] + kStep == freqs[i]) {
