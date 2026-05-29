@@ -57,11 +57,19 @@ BaseMenuGui::~BaseMenuGui() {
 // Fast preDraw - just renders pre-computed strings
 void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     BaseGui::preDraw(renderer);
-    if(!this->context) [[unlikely]] return;
+    if (!this->context) [[unlikely]] {
+        this->context = new HocClkContext;
+    }
+
+    Result rc = hocclkIpcGetCurrentContext(this->context);
+    if (R_FAILED(rc)) [[unlikely]] {
+        FatalGui::openWithResultCode("hocclkIpcGetCurrentContext", rc);
+        return;
+    }
 
     // All constants pre-calculated and cached
     const char* labels[] = {
-        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "Fan", IsAula() ? "OLED" : "LCD", "FPS", "RES"
+        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "Fan", IsAula() || this->context->isUsingRetroSuper ? "OLED" : "LCD", "FPS", "RES"
     };
 
     static constexpr u32 dataPositions[6] = {63-3+3, 200-1, 344-1-3, 200-1, 342-1, 321-1};
