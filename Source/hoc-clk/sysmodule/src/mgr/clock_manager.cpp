@@ -182,12 +182,11 @@ namespace clockManager {
         std::uint32_t *hz = &gFreqTable[module].list[0];
         gFreqTable[module].count = 0;
 
-        if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Mariko) {
-            constexpr u32 kStep = 38400000;
+        if (module == HocClkModule_GPU && board::GetSocType() == HocClkSocType_Mariko
+                && config::GetConfigValue(HocClkConfigValue_MarikoMiddleFreqs)) {
+            constexpr u32 kStep    = 38400000;
             constexpr u32 kPcvStep = 76800000;
-            bool middleFreqs = config::GetConfigValue(HocClkConfigValue_MarikoMiddleFreqs) != 0;
 
-            u32 kMax = ~0;
             for (u32 i = 0; i < count; i++) {
                 for (u32 j = 0; j < count; j++) {
                     if (freqs[j] + kStep == freqs[i]) {
@@ -196,44 +195,43 @@ namespace clockManager {
                     }
                 }
             }
-
-            if (kMax == (u32)~0) {
+            if (kMax == ~0u) {
                 kMax = 0;
                 for (u32 i = 0; i < count; i++) {
                     if (freqs[i] > kMax) kMax = freqs[i];
                 }
             }
 
-            board::SetMarikoGm20bCutoff(middleFreqs ? kMax : 0);
+            board::SetMarikoGm20bCutoff(kMax);
 
-            if (middleFreqs) {
-                for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; f += kStep) {
-                    if (f % kPcvStep != 0) {
-                        *hz = f;
-                        gFreqTable[module].count++;
-                        hz++;
-                    } else {
-                        for (u32 i = 0; i < count; i++) {
-                            if (freqs[i] == f) {
-                                *hz = f;
-                                gFreqTable[module].count++;
-                                hz++;
-                                break;
-                            }
+            for (u32 f = kPcvStep; f <= kMax && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; f += kStep) {
+                if (f % kPcvStep != 0) {
+                    *hz = f;
+                    gFreqTable[module].count++;
+                    hz++;
+                } else {
+                    for (u32 i = 0; i < count; i++) {
+                        if (freqs[i] == f) {
+                            *hz = f;
+                            gFreqTable[module].count++;
+                            hz++;
+                            break;
                         }
                     }
                 }
-
-                for (u32 i = 0; i < count && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; i++) {
-                    if (freqs[i] > kMax && IsAssignableHz(module, freqs[i])) {
-                        *hz = freqs[i];
-                        gFreqTable[module].count++;
-                        hz++;
-                    }
-                }
-                return;
             }
+
+            for (u32 i = 0; i < count && gFreqTable[module].count < HOCCLK_FREQ_LIST_MAX; i++) {
+                if (freqs[i] > kMax && IsAssignableHz(module, freqs[i])) {
+                    *hz = freqs[i];
+                    gFreqTable[module].count++;
+                    hz++;
+                }
+            }
+            return;
         }
+
+        board::SetMarikoGm20bCutoff(0);
 
         for (std::uint32_t i = 0; i < count; i++) {
             if (!IsAssignableHz(module, freqs[i])) {
@@ -296,11 +294,28 @@ namespace clockManager {
         fileUtils::LogLine("[mgr] count = %u", gFreqTable[module].count);
     }
 
-    bool HandleSafetyFeatures()
+    bool HandleSafetyFeatures(bool isBoost)
     {
         if (((tmp451TempSoc() / 1000) > (int)config::GetConfigValue(HocClkConfigValue_ThermalThrottleThreshold)) && config::GetConfigValue(HocClkConfigValue_ThermalThrottle)) {
             ResetToStockClocks();
             return true;
+        }
+
+        if (config::GetConfigValue(HocClkConfigValue_AutoRAMCPUOverclock) && !isBoost && !governor::isCpuGovernorEnabled) {
+            u32 ramHz = gContext.freqs[HocClkModule_MEM];
+            u32 threshold = (u32)config::GetConfigValue(HocClkConfigValue_AutoRamCpuRamOCThreshold) * 1000;
+            if (ramHz >= threshold) {
+                u32 cpuOverrideHz = (u32)config::GetConfigValue(HocClkConfigValue_AutoRamCpuCpuOCFreq) * 1000;
+                if (cpuOverrideHz <= gContext.freqs[HocClkModule_CPU])
+                    return false;
+                u32 maxHz = GetMaxAllowedHz(HocClkModule_CPU, gContext.profile);
+                u32 nearestHz = GetNearestHz(HocClkModule_CPU, cpuOverrideHz, maxHz);
+                board::SetHz(HocClkModule_CPU, nearestHz);
+                gContext.freqs[HocClkModule_CPU] = nearestHz;
+                if (HocClkModule_CPU < HocClkModuleStable_EnumMax)
+                    gContext.stable.freqs[HocClkModule_CPU] = nearestHz;
+                return true;
+            }
         }
         return false;
     }
@@ -509,27 +524,6 @@ namespace clockManager {
                 }
             } else {
                 HandleFreqReset((HocClkModule)module, isBoost, didHijackPcv);
-            }
-        }
-
-        if (config::GetConfigValue(HocClkConfigValue_AutoRAMCPUOverclock) && !skipCpuDueToBoost && !governor::isCpuGovernorEnabled) {
-            u32 ramHz = gContext.freqs[HocClkModule_MEM];
-            u32 threshold = (u32)config::GetConfigValue(HocClkConfigValue_AutoRamCpuRamOCThreshold) * 1000;
-            if (ramHz >= threshold) {
-                u32 cpuOverrideHz = (u32)config::GetConfigValue(HocClkConfigValue_AutoRamCpuCpuOCFreq) * 1000;
-                if (cpuOverrideHz <= gContext.freqs[HocClkModule_CPU])
-                    return;
-                maxHz = GetMaxAllowedHz(HocClkModule_CPU, gContext.profile);
-                nearestHz = GetNearestHz(HocClkModule_CPU, cpuOverrideHz, maxHz);
-                fileUtils::LogLine(
-                    "[mgr] AutoRAMCPUOC CPU clock set : %u.%u MHz (ram = %u.%u MHz)",
-                    nearestHz / 1000000, nearestHz / 100000 - nearestHz / 1000000 * 10,
-                    ramHz / 1000000, ramHz / 100000 - ramHz / 1000000 * 10
-                );
-                board::SetHz(HocClkModule_CPU, nearestHz);
-                gContext.freqs[HocClkModule_CPU] = nearestHz;
-                if (HocClkModule_CPU < HocClkModuleStable_EnumMax)
-                    gContext.stable.freqs[HocClkModule_CPU] = nearestHz;
             }
         }
     }
@@ -776,7 +770,7 @@ namespace clockManager {
 
         bool isBoost = apmExtIsBoostMode(mode);
 
-        bool shouldSkipClockSet = HandleSafetyFeatures();
+        bool shouldSkipClockSet = HandleSafetyFeatures(isBoost);
         HandleMiscFeatures();
         
         // GPU clock should always be the same unless PCV has overwriten our change, so reset it
