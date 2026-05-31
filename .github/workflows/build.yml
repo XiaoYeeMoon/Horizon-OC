@@ -55,7 +55,7 @@ jobs:
           echo $GITHUB_SHA >> dist/.commit
 
       - name: Clone Libnx
-        run: git clone https://github.com/switchbrew/libnx.git --depth=1 --single-branch
+        run: git clone https://github.com/switchbrew/libnx.git --depth=1 --single-branch -b v4.12.0
 
       - name: Clone Atmosphere
         run: git clone --depth=1 --single-branch https://github.com/Atmosphere-NX/Atmosphere.git atmosphere -b $(cat ams_ver.txt)
@@ -79,11 +79,13 @@ jobs:
 
       - name: Configure ccache
         run: |
-          export CCACHE_DIR=/root/.cache/ccache
-          echo "CCACHE_DIR=/root/.cache/ccache" >> $GITHUB_ENV
+          export CCACHE_DIR="$HOME/.cache/ccache"
+          export CCACHE_BASEDIR="$GITHUB_WORKSPACE"
+          export CCACHE_COMPILERCHECK=content
+          export CCACHE_NOHASHDIR=true
+          echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
           ccache --set-config=max_size=10G
           ccache --set-config=compiler_check=content
-          ccache --zero-stats
 
       - name: Build Libnx
         shell: bash
