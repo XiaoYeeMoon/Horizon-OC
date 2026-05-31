@@ -264,10 +264,6 @@ void AboutGui::listUI()
     );
 
     this->listElement->addItem(
-        new tsl::elm::ListItem("Xenshen")
-    );
-
-    this->listElement->addItem(
         new tsl::elm::ListItem("Frost")
     );
 
@@ -286,10 +282,6 @@ void AboutGui::listUI()
 
     this->listElement->addItem(
         new tsl::elm::ListItem("hanai3Bi - Switch OC Suite & EOS")
-    );
-
-    this->listElement->addItem(
-        new tsl::elm::ListItem("NaGaa95 - L4T-OC-Kernel")
     );
 
     this->listElement->addItem(
