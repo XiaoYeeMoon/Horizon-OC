@@ -64,3 +64,8 @@ const u32 MA_RANGE_MIN = 512;
 const u32 MA_RANGE_MAX = 4544;
 
 const u8 BQ24193_CHARGE_CURRENT_CONTROL_REG = 0x2;
+
+Result I2c_Bq24193_SetInputCurrentLimit(u32 ma);
+Result I2c_Bq24193_GetInputCurrentLimit(u32 *ma);
+
+const u8 BQ24193_INPUT_SOURCE_CONTROL_REG = 0x00;

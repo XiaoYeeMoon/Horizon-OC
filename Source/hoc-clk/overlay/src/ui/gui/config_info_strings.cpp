@@ -90,6 +90,13 @@ std::vector<std::string> ConfigInfoStrings(HocClkConfigValue val, bool isMariko,
                 isHoag ? "Default: 1664 mA" : "2048 mA"
             };
 
+
+        case HocClkConfigValue_InputCurrentLimit:
+            return {
+                "Overrides the maximum input current from the charger.",
+                isHoag ? "Default: 900 mA" : "1200 mA" 
+            };
+
         case HocClkConfigValue_AulaDisplayColorPreset:
             return {
                 "Current display color preset. Default is Basic",

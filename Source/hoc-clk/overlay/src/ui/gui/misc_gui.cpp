@@ -761,7 +761,7 @@ protected:
         tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
             renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
             renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+            renderer->drawString("damage to your battery or orcodeus!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
         });
         chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
         this->listElement->addItem(chargeWarningText);
@@ -819,6 +819,43 @@ protected:
             );
 
         }
+
+
+        tsl::elm::CustomDrawer* inputLimitWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString("\uE150 Overriding the input current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("limit increases power draw from", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("your charger. Use only with the", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+            renderer->drawString("official Nintendo charger!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
+        });
+        inputLimitWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
+        this->listElement->addItem(inputLimitWarningText);
+
+        // having an option for hoag would be cool and disabling 100-500 and 2000+
+        std::vector<NamedValue> inputCurrentLimits = {
+            NamedValue("Disabled", 0),
+            NamedValue("100mA",    100),
+            NamedValue("150mA",    150),
+            NamedValue("500mA",    500),
+            NamedValue("900mA",    900, "Hoag Default"),
+            NamedValue("1200mA",  1200, "Default"),
+            NamedValue("1500mA",  1500),  
+            NamedValue("2000mA",  2000),
+            NamedValue("3000mA",  3000),  
+        };
+
+        ValueThresholds inputLimitThresholds(2000, 2001);
+
+        addConfigButton(
+            HocClkConfigValue_InputCurrentLimit,
+            "Input Current Limit Override",
+            ValueRange(0, 0, 1, "", 0),
+            "Input Current Limit Override",
+            &inputLimitThresholds,
+            {},
+            inputCurrentLimits,
+            false
+        );
+
         if(IsAula()) {
             std::vector<NamedValue> displayClrPreset = {
                 NamedValue("Do Not Override", AulaDisplayColorMode_DoNotOverride),

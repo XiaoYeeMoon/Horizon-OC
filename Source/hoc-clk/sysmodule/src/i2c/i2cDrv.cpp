@@ -220,3 +220,54 @@ Result I2c_Bq24193_SetFastChargeCurrentLimit(u32 ma) {
     u8 raw = I2c_Bq24193_Convert_mA_Raw(ma);
     return I2cSet_U8(I2cDevice_Bq24193, BQ24193_CHARGE_CURRENT_CONTROL_REG, raw);
 }
+
+// Converts mA to the raw value for bits [2:0] of REG00
+static u8 I2c_Bq24193_Convert_InputmA_Raw(u32 ma) {
+    if (ma <= 100)  return 0b000;
+    if (ma <= 150)  return 0b001;
+    if (ma <= 500)  return 0b010;
+    if (ma <= 900)  return 0b011;
+    if (ma <= 1200) return 0b100;
+    if (ma <= 1500) return 0b101;
+    if (ma <= 2000) return 0b110;
+    return          0b111; // 3000mA max
+}
+
+Result I2c_Bq24193_SetInputCurrentLimit(u32 ma) {
+    // don't do anything if it's disabled
+    if (ma == 0)
+        return 0;
+
+    u8 raw;
+    Result res = I2cRead_OutU8(I2cDevice_Bq24193,
+                               BQ24193_INPUT_SOURCE_CONTROL_REG,
+                               &raw);
+    if (R_FAILED(res))
+        return res;
+
+    raw &= ~0x07;
+    raw |= I2c_Bq24193_Convert_InputmA_Raw(ma);
+
+    return I2cSet_U8(I2cDevice_Bq24193,BQ24193_INPUT_SOURCE_CONTROL_REG,raw);
+}
+
+// not used
+Result I2c_Bq24193_GetInputCurrentLimit(u32 *ma) {
+    u8 raw;
+    Result res = I2cRead_OutU8(I2cDevice_Bq24193,BQ24193_INPUT_SOURCE_CONTROL_REG,&raw);
+    if (R_FAILED(res))
+        return res;
+
+    switch (raw & 0x07) {
+        case 0b000: *ma = 100;  break;
+        case 0b001: *ma = 150;  break;
+        case 0b010: *ma = 500;  break;
+        case 0b011: *ma = 900;  break;
+        case 0b100: *ma = 1200; break;
+        case 0b101: *ma = 1500; break;
+        case 0b110: *ma = 2000; break;
+        case 0b111: *ma = 3000; break;
+        default:    *ma = 0;    break;
+    }
+    return 0;
+}

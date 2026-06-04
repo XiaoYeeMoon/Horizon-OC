@@ -47,6 +47,7 @@ typedef enum {
     HocClkConfigValue_ThermalThrottleThreshold,
 
     HocClkConfigValue_BatteryChargeCurrent,
+    HocClkConfigValue_InputCurrentLimit,
 
     HocClkConfigValue_OverwriteRefreshRate,
     HocClkConfigValue_MaxDisplayClockH,
@@ -236,6 +237,9 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
 
         case HocClkConfigValue_BatteryChargeCurrent:
             return pretty ? "Battery Charge Current" : "bat_charge_current";
+            
+        case HocClkConfigValue_InputCurrentLimit:
+            return pretty ? "Input Current Limit" : "in_curr_limit";
 
         case HocClkConfigValue_OverwriteRefreshRate:
             return pretty ? "Display Refresh Rate Changing" : "drr_changing";
@@ -486,6 +490,7 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
         case HocClkConfigValue_UncappedClocks:
         case HocClkConfigValue_OverwriteBoostMode:
         case HocClkConfigValue_BatteryChargeCurrent:
+        case HocClkConfigValue_InputCurrentLimit: 
         case HocClkConfigValue_OverwriteRefreshRate:
         case HocClkConfigValue_GPUScheduling:
         case HocClkConfigValue_LiveCpuUv:
@@ -670,6 +675,10 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
             return true;
         case HocClkConfigValue_BatteryChargeCurrent:
             return ((input >= 1024) && (input <= 3072)) || !input;
+
+        case HocClkConfigValue_InputCurrentLimit:
+            return ((input >= 100) && (input <= 3000)) || !input;
+            
         case HocClkConfigValue_DisplayVoltage:
             return ((input >= 800) && (input <= 1325));
 
