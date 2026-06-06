@@ -135,6 +135,10 @@ namespace kip {
             table.eristaGpuVoltArray[i] = config::GetConfigValue((HocClkConfigValue)(KipConfigValue_g_volt_e_76800 + i));
         }
 
+        for (size_t i = 0; i < 26; ++i) {
+            table.marikoSocVoltArray[i] = config::GetConfigValue((HocClkConfigValue) (KipConfigValue_g_soc_volt_1866000 + i));
+        }
+
         CUST_WRITE_FIELD_BATCH(&table, t6_tRTW_fine_tune, config::GetConfigValue(KipConfigValue_t6_tRTW_fine_tune));
         CUST_WRITE_FIELD_BATCH(&table, t7_tWTR_fine_tune, config::GetConfigValue(KipConfigValue_t7_tWTR_fine_tune));
 
@@ -288,6 +292,10 @@ namespace kip {
 
         for (int i = 0; i < 27; i++) {
             configValues.values[KipConfigValue_g_volt_e_76800 + i] = cust_get_erista_gpu_volt(&table, i);
+        }
+
+        for (size_t i = 0; i < 26; ++i) {
+            configValues.values[KipConfigValue_g_soc_volt_1866000 + i] = cust_get_mariko_soc_volt(&table, i);
         }
 
         configValues.values[KipConfigValue_t7_tWTR_fine_tune] = cust_get_tWTR_fine_tune(&table);

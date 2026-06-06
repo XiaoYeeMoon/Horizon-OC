@@ -123,6 +123,7 @@ struct CustomizeTable {
 
     u32 eristaGpuVoltArray[27];
     u32 marikoGpuVoltArray[24];
+    s32 marikoSocVoltArray[26];
 
     u32 fineTune_t6_tRTW;
     u32 fineTune_t7_tWTR;
