@@ -45,7 +45,7 @@ INCLUDES	:=	include
 #ROMFS	:=	romfs
 APP_TITLE   :=  Membench-NX
 APP_VERSION :=  1.0.0
-APP_AUTHOR	:=  KazushiMe and Horizon-OC
+APP_AUTHOR	:=  KazushiMe, CtCaer and Horizon-OC
 
 TARGET_VERSION	:= 1.0.0
 
