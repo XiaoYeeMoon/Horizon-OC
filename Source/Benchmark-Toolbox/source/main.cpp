@@ -13,6 +13,7 @@ extern "C" {
 #include <unistd.h>
 
 #include "bench.h"
+#include "cpu_stress.h"
 #include "gpu_bw.h"
 #include "gpu_stress.h"
 #include "hoc_clk.h"
@@ -658,6 +659,125 @@ class MemtesterTab : public brls::Box {
     brls::Rectangle *barFill, *barTrack;
 };
 
+class CpuStressTab : public brls::Box {
+    public:
+    CpuStressTab() {
+        this->setAxis(brls::Axis::COLUMN);
+        this->setGrow(1.0f);
+        this->setPadding(40.0f, 60.0f, 40.0f, 60.0f);
+
+        auto *modeRow = new brls::Box(brls::Axis::ROW);
+        modeRow->setMarginBottom(10.0f);
+        auto *ml = new brls::Label();
+        ml->setText("Mode");
+        ml->setGrow(1.0f);
+        modeRow->addView(ml);
+        modeVal = new brls::Label();
+        modeVal->setText(modeName(mode));
+        modeRow->addView(modeVal);
+        this->addView(modeRow);
+
+        auto *hint = new brls::Label();
+        hint->setText("Use L / R to select the CPU stress mode. Press A to run.");
+        hint->setFontSize(15.0f);
+        hint->setTextColor(nvgRGB(150, 150, 150));
+        hint->setMarginBottom(14.0f);
+        this->addView(hint);
+
+        toggle = new brls::Button();
+        toggle->setText("Start");
+        toggle->registerClickAction([this](brls::View *) {
+            onToggle();
+            return true;
+        });
+        this->addView(toggle);
+
+        this->registerAction("Prev mode", brls::ControllerButton::BUTTON_LB, [this](brls::View *) {
+            cycle(-1);
+            return true;
+        });
+        this->registerAction("Next mode", brls::ControllerButton::BUTTON_RB, [this](brls::View *) {
+            cycle(1);
+            return true;
+        });
+
+        statusL = new brls::Label();
+        statusL->setText("Stopped");
+        statusL->setMarginTop(10.0f);
+        statusL->setMarginBottom(8.0f);
+        this->addView(statusL);
+
+        auto *h = new brls::Header();
+        h->setTitle("Live");
+        this->addView(h);
+        rowA = makeRow(this, "Iterations");
+        rowB = makeRow(this, "Mismatches");
+        rowC = makeRow(this, "Threads");
+    }
+
+    ~CpuStressTab() override {
+        if (cpu_stress_running())
+            cpu_stress_stop();
+    }
+
+    void willDisappear(bool resetState = false) override {
+        if (cpu_stress_running())
+            cpu_stress_stop();
+        brls::Box::willDisappear(resetState);
+    }
+
+    void frame(brls::FrameContext *ctx) override {
+        cpu_stress_status_t s;
+        cpu_stress_get(&s);
+        if (cpu_stress_running() || lastRunning) {
+            rowA->setText(fstru("%llu", (unsigned long long)s.iters));
+            rowB->setText(fstru("%llu", (unsigned long long)s.mismatches));
+            rowC->setText(fstru("%llu", (unsigned long long)s.threads));
+            if (cpu_stress_running())
+                statusL->setText(s.mismatches ? "Errors found! Running..." : "Running...");
+        }
+        syncToggle(cpu_stress_running() != 0);
+        brls::Box::frame(ctx);
+    }
+
+    private:
+    static const char *modeName(int m) {
+        switch (m) {
+            case 0: return "Matrixprod";
+            case 1: return "Hanoi (verify)";
+        }
+        return "";
+    }
+    void cycle(int dir) {
+        if (cpu_stress_running())
+            return;
+        mode = (mode + dir + 2) % 2;
+        modeVal->setText(modeName(mode));
+    }
+    void onToggle() {
+        if (cpu_stress_running())
+            cpu_stress_stop();
+        else {
+            rowA->setText("-");
+            rowB->setText("-");
+            rowC->setText("-");
+            cpu_stress_start(mode);
+        }
+    }
+    void syncToggle(bool running) {
+        if (running == lastRunning)
+            return;
+        lastRunning = running;
+        toggle->setText(running ? "Stop" : "Start");
+        if (!running)
+            statusL->setText("Stopped");
+    }
+    int mode = 0;
+    bool lastRunning = false;
+    brls::Label *modeVal, *statusL, *rowA, *rowB, *rowC;
+    brls::Button *toggle;
+};
+
 class CreditsTab : public brls::Box {
     public:
     CreditsTab() {
@@ -773,6 +893,7 @@ class MainActivity : public brls::Activity {
         tab->addTab("Membench", [] { return new BenchTab(); });
         tab->addTab("GPU Test", [] { return new StressTab(); });
         tab->addTab("Memtester", [] { return new MemtesterTab(); });
+        tab->addTab("CPU Stress", [] { return new CpuStressTab(); });
         tab->addSeparator();
         tab->addTab("Furmark", [] { return new FurmarkTab(0, "FurMark for Switch (48 step)"); });
         tab->addTab("Furmark RAM", [] { return new FurmarkTab(1, "FurMark with extra ram stress"); });
@@ -813,6 +934,8 @@ int main(int argc, char *argv[]) {
         mt_gpu_stop();
     if (mt_cpu_running())
         mt_cpu_stop();
+    if (cpu_stress_running())
+        cpu_stress_stop();
 
     _exit(EXIT_SUCCESS);
 }
