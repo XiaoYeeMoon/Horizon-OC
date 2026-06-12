@@ -837,10 +837,9 @@ class CreditsTab : public brls::Box {
         this->addView(title);
 
         auto *by = new brls::Label();
-        by->setText("by Souldbminer");
+        by->setText("by Souldbminer and Lightos_, licensed under the GPLv2");
         by->setFontSize(16.0f);
         by->setTextColor(nvgRGB(150, 150, 150));
-        by->setMarginBottom(12.0f);
         this->addView(by);
 
         auto *h = new brls::Header();
