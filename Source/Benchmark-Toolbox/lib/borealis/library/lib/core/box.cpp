@@ -561,8 +561,16 @@ void Box::forwardXMLAttribute(std::string attributeName, View* target, std::stri
 
 void Box::onChildFocusGained(View* directChild, View* focusedView)
 {
-    if (this->hasParent())
+    for (size_t i = 0; i < this->children.size(); i++) {
+        if (this->children[i] == directChild) {
+            this->defaultFocusedIndex = i;
+            break;
+        }
+    }
+
+    if (this->hasParent()) {
         this->getParent()->onChildFocusGained(this, focusedView);
+    }
 }
 
 void Box::onChildFocusLost(View* directChild, View* focusedView)
