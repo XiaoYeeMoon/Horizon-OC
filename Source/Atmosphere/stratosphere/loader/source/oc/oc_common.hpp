@@ -58,8 +58,8 @@ namespace ams::ldr {
 namespace ams::ldr::hoc {
     template<typename Pointer>
     struct PatcherEntry {
-        using patternFn = bool(*)(Pointer* ptr);
-        using patcherFn = Result(*)(Pointer* ptr);
+        using patternFn = bool(*)(Pointer *ptr);
+        using patcherFn = Result(*)(Pointer *ptr);
 
         const char* description;
         patcherFn   patcher_fn = nullptr;
@@ -79,7 +79,7 @@ namespace ams::ldr::hoc {
 
         Result SearchAndApply(Pointer *ptr) {
             bool searchOk = false;
-            if (pattern_search_fn) {
+            if (pattern_search_fn), {
                 if (pattern_search_fn(ptr)) {
                     searchOk = true;
                 }
