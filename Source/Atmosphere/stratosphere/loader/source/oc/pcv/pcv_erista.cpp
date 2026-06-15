@@ -27,11 +27,9 @@
 
 namespace ams::ldr::hoc::pcv::erista {
 
-    namespace {
-        std::vector<u32> newEmcList;
-        u32 *nsoStart;
-        u32 **patchPointerPtr = nullptr;
-    }
+    std::vector<u32> newEmcList;
+    u32 *nsoStart;
+    u32 *nsoEnd;
 
     Result CpuVoltDvfs(u32 *ptr) {
         if (std::memcmp(ptr + 5, cpuVoltDvfsPattern, sizeof(cpuVoltDvfsPattern))) {
@@ -370,7 +368,7 @@ namespace ams::ldr::hoc::pcv::erista {
         table->emc_cfg_2          = 0x11083D;
         table->min_volt           = std::clamp(900 + (C.emcDvbShift * 25), 900, 1050);
     }
-
+    
     /* TODO: Template this */
     Result VerifyMtcTable(EristaMtcTable *tableStart, u32 expectedFreq) {
         R_UNLESS(tableStart->rate_khz == expectedFreq,  ldr::ResultInvalidMtcTable());
@@ -419,23 +417,14 @@ namespace ams::ldr::hoc::pcv::erista {
         return index * erista::MtcFullTableSize + mariko::MtcFullTableSize;
     }
 
-    size_t GetRemainingRegionSize(MtcTableIndex index) {
-        size_t fullRegionSize = (mariko::MtcFullTableSize) * (mariko::MtcFullTableCount) + (erista::MtcFullTableSize) * (erista::MtcFullTableCount);
+    void PrepareMtcMemoryRegion(u8 *firstTable, EristaMtcTable *usedTable) {
+        /* Move the table, this is nessasary for NLE */
+        memmove(firstTable, usedTable, erista::MtcFullTableSize);
 
-        if (index > T210SdevEmcDvfsTableS4gb01) {
-            fullRegionSize -= mariko::MtcFullTableSize;
-        }
-
-        static const size_t prevTables = index * erista::MtcFullTableSize;
-        return fullRegionSize - prevTables;
-    }
-
-    void PrepareMtcMemoryRegion(u8 *tableStart, size_t remainingSize) {
         /* Clear all other tables. */
         /* The used table is excluded. */
-        // constexpr size_t RemainingRegionSize = (mariko::MtcFullTableSize) * (mariko::MtcFullTableCount) + (erista::MtcFullTableSize * (erista::MtcFullTableCount - 1));
-
-        memset(tableStart + erista::MtcFullTableSize, 0, remainingSize);
+        constexpr size_t RemainingRegionSize = (mariko::MtcFullTableSize) * (mariko::MtcFullTableCount) + (erista::MtcFullTableSize * (erista::MtcFullTableCount - 1));
+        memset(firstTable + erista::MtcFullTableSize, 0, RemainingRegionSize);
     }
 
     void MtcExtendTables(EristaMtcTable *table) {
@@ -443,6 +432,39 @@ namespace ams::ldr::hoc::pcv::erista {
             std::memcpy(&table[i], &table[i - 1], sizeof(EristaMtcTable));
             table[i].rate_khz = newEmcList[i];
         }
+    }
+
+    /* Relocate the table */
+    /* Rescanning is simpler than trying to extract a bunch of data from the asm patch, performance impact is negligable */
+    /* Also, this is more stable :P */
+    u32 RepointEristaEmcTablePtr(uintptr_t fromSlot, uintptr_t toTable) {
+        constexpr u32 RetIns = 0xD65F03C0; /* ret */
+        u32 patched = 0;
+
+        for (u32 *p = nsoStart; p + 4 < nsoEnd; ++p) {
+            const u32 ins = *p;
+            if (!AsmIsAdrX0(ins)) {
+                continue;
+            }
+
+            const uintptr_t pc = reinterpret_cast<uintptr_t>(p);
+            if (AsmAdrTarget(ins, pc) != fromSlot) {
+                continue;
+            }
+            if (!(AsmIsLdpX(p[1]) && AsmIsLdpX(p[2]) && p[3] == RetIns)) {
+                continue;
+            }
+
+            /* adr only reaches +-1MB */
+            const s64 delta = static_cast<s64>(toTable) - static_cast<s64>(pc);
+            if (delta > 0xFFFFF || delta < -0x100000) {
+                continue;
+            }
+
+            PATCH_OFFSET(p, AsmSetAdrTarget(ins, pc, toTable));
+            ++patched;
+        }
+        return patched;
     }
 
     /* The silicon instructs; the children obey... */
@@ -493,7 +515,6 @@ namespace ams::ldr::hoc::pcv::erista {
         newEmcList.resize(std::min(newEmcList.size(), DvfsTableEntryLimit));
     }
 
-    /* Todo: Test other dram ids. */
     Result MemFreqMtcTable(u32 *ptr) {
         static const DramId dramId = [] {
             DramId id = GetDramId();
@@ -514,10 +535,19 @@ namespace ams::ldr::hoc::pcv::erista {
         constexpr u32 StartAdjustment = offsetof(EristaMtcTable, rate_khz) + sizeof(EristaMtcTable) * (erista::MtcTableCountDefault - 1);
         u8 *startPtr = reinterpret_cast<u8 *>(ptr) - StartAdjustment;
 
-        EristaMtcTable *table = reinterpret_cast<EristaMtcTable *>(startPtr + mtcOffset);
+        const uintptr_t usedSlot = reinterpret_cast<uintptr_t>(startPtr) + mtcOffset;
+        EristaMtcTable *table = reinterpret_cast<EristaMtcTable *>(usedSlot);
         R_TRY(MtcValidateAllTables(table, EmcListDefault, EmcListSizeDefault));
 
-        PrepareMtcMemoryRegion(reinterpret_cast<u8 *>(table), GetRemainingRegionSize(mtcIndex));
+        PrepareMtcMemoryRegion(startPtr, table);
+        table = reinterpret_cast<EristaMtcTable *>(startPtr);
+
+        /* We must do this as the NLE tables don't have enough space past them for our extended ones */
+        if (usedSlot != reinterpret_cast<uintptr_t>(startPtr)) {
+            if (RepointEristaEmcTablePtr(usedSlot, reinterpret_cast<uintptr_t>(startPtr)) == 0) {
+                AbortInvalidMtc("Failed to repoint emc table");
+            }
+        }
 
         if (R_FAILED(MtcValidateAllTables(table, EmcListDefault, EmcListSizeDefault))) {
             AbortInvalidMtc("Failed mtc validation");
@@ -537,9 +567,6 @@ namespace ams::ldr::hoc::pcv::erista {
             MemMtcTableAutoAdjust(&table[i]);
         }
 
-        /* Hack: Update the ptr32 in Patch via a pointer-pointer. */
-        /* This avoids overwriting the 1600MHz table. */
-        *patchPointerPtr = &table[newEmcList.size() - 1];
         R_SUCCEED();
     }
 
@@ -580,6 +607,7 @@ namespace ams::ldr::hoc::pcv::erista {
     //     R_SUCCEED();
     // }
 
+
     Result MemMtcTableAsm(u32 *ptr) {
         /* This is a mess but the compiler made this painful to patch so we must do it this way */
         constexpr s32 GoodAdrpOffset = -1;
@@ -609,15 +637,17 @@ namespace ams::ldr::hoc::pcv::erista {
         u32 adrp = *(ptr + GoodAdrpOffset);
         R_UNLESS(AsmCompareAdrpNoImm(adrp, MtcAdrpAsm), ldr::ResultInvalidMtcTablePattern());
 
+
         /* Check for the branch instruction above the cbz to ensure we are patching the right location*/
         u32 bl = *(ptr + GoodBlOffset);
         R_UNLESS(AsmBlCompareOpcodeOnly(bl, MtcGoodBlOpcode), ldr::ResultInvalidMtcTablePattern());
+
 
         /* Check for the mov that actually sets the mtc table count. */
         u32 mov = *(ptr + GoodMovOffset);
         R_UNLESS(asm_compare_no_rd(mov, MtcMovAsm), ldr::ResultInvalidMtcTablePattern());
 
-        /* Patch out the count of the mov to our custom mtc table amount. */
+        /* Patch out the count of the mov to our custom mtc table amount*/
         u32 movCountPatch = asm_set_rd(asm_set_imm16(MtcMovAsm, newEmcList.size()), asm_get_rd(mov));
 
         PATCH_OFFSET(ptr + GoodMovOffset, movCountPatch);
@@ -627,6 +657,7 @@ namespace ams::ldr::hoc::pcv::erista {
 
     void Patch(uintptr_t mapped_nso, size_t nso_size) {
         nsoStart = reinterpret_cast<u32 *>(mapped_nso);
+        nsoEnd   = reinterpret_cast<u32 *>(mapped_nso + nso_size);
         MtcGenerateFreqTables();
 
         u32 CpuCvbDefaultMaxFreq = static_cast<u32>(GetDvfsTableLastEntry(CpuCvbTableDefault)->freq);
@@ -650,14 +681,6 @@ namespace ams::ldr::hoc::pcv::erista {
             {"MEM Volt",          &MemVoltHandler,         2, nullptr,  MemVoltHOS           },
         };
 
-        /* Hack: This avoids overwriting mtc tables in bad ways on nle rams. */
-        /* Compiler obviously complains due to the pointer warcrimes, but patchPointerPtr will not be used after Patch returns, so this is fine. */
-        u32 *ptr32 = nullptr;
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wdangling-pointer"
-
-        patchPointerPtr = &ptr32;
-        #pragma GCC diagnostic pop
         for (uintptr_t ptr = mapped_nso; ptr <= mapped_nso + nso_size - sizeof(EristaMtcTable); ptr += sizeof(u32)) {
             u32 *ptr32 = reinterpret_cast<u32 *>(ptr);
             for (auto &entry : patches) {
@@ -667,9 +690,12 @@ namespace ams::ldr::hoc::pcv::erista {
             }
         }
 
+        // ViewLog();
+
         for (auto &entry : patches) {
             LOGGING("%s Count: %zu\n", entry.description, entry.patched_count);
             if (R_FAILED(entry.CheckResult())) {
+                // ViewLog();
                 panic::SmcError(panic::Patch);
 
                 CRASH(entry.description);
